@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Trial AI Agent</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; }
+        .btn { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+        .btn:hover { background: #2980b9; }
+        #chatbox { height: 300px; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; margin-bottom: 10px; background: #fafafa; border-radius: 5px; }
+        .user-msg { margin: 5px 0; color: #2980b9; font-weight: bold; }
+        .ai-msg { margin: 5px 0 15px 0; color: #2c3e50; background: #e8f4f8; padding: 8px; border-radius: 5px; }
+        .input-area { display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2> ClinicaMind: Privacy-First Clinical Trial AI Agent</h2>
+    
+    <!-- data ingestion button -->
+    <button class="btn" onclick="ingestData()"> Step 1: Update the new clinical databaseा</button>
+    <p id="status-text" style="color: green; font-weight: bold;"></p>
+
+    <!-- chat window -->
+    <div id="chatbox"></div>
+
+    <div class="input-area">
+        <input type="text" id="user-question" placeholder="Ask questions about the clinical trial or study...">
+        <button class="btn" style="margin: 0;" onclick="askQuestion()">ask</button>
+    </div>
+</div>
+
+<script>
+    const BACKEND_URL = "http://localhost:5000";
+
+    async function ingestData() {
+        document.getElementById('status-text').innerText = "data is being processed, please wait....";
+        try {
+            let res = await fetch(`${BACKEND_URL}/ingest`);
+            let data = await res.json();
+            document.getElementById('status-text').innerText = data.message;
+        } catch (err) {
+            document.getElementById('status-text').innerText = "ensure the backend server is running!";
+        }
+    }
+
+    async function askQuestion() {
+        let qInput = document.getElementById('user-question');
+        let question = qInput.value;
+        if(!question) return;
+
+        let chatbox = document.getElementById('chatbox');
+        chatbox.innerHTML += `<div class="user-msg">you: ${question}</div>`;
+        qInput.value = "";
+
+        try {
+            let res = await fetch(`${BACKEND_URL}/ask`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: question })
+            });
+            let data = await res.json();
+            chatbox.innerHTML += `<div class="ai-msg">AI असिस्टंट: ${data.answer || data.error}</div>`;
+        } catch (err) {
+            chatbox.innerHTML += `<div class="ai-msg" style="color:red;">Error: Could not connect to the backend.</div>`;
+        }
+        chatbox.scrollTop = chatbox.scrollHeight;
+    }
+</script>
+</body>
+</html>
